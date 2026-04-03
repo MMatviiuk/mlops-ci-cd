@@ -1,0 +1,18 @@
+FROM python:3.9 AS builder
+
+WORKDIR /build
+
+RUN pip install --no-cache-dir --target=/build/packages \
+    torch \
+    torchvision \
+    pillow
+
+
+FROM python:3.9-slim AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /build/packages /usr/local/lib/python3.9/site-packages
+COPY model.pt inference.py imagenet_labels.json ./
+
+CMD ["python", "inference.py", "test.jpg"]

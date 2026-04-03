@@ -1,0 +1,55 @@
+FROM python:3.9
+
+WORKDIR /app
+
+# Базовий dev/debug-образ свідомо залишає системні інструменти в runtime-шарі.
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    git \
+    vim \
+    less \
+    tree \
+    procps \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    pkg-config \
+    libjpeg-dev \
+    libpng-dev \
+    zlib1g-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Зберігаємо wheel-артефакти та повний набір dev-пакетів, щоб fat-образ був
+# придатний для локального відлагодження, але відчутно важчий за slim.
+RUN mkdir -p /opt/wheels && \
+    pip download --dest /opt/wheels \
+    torch \
+    torchvision \
+    pillow \
+    Django \
+    jupyterlab \
+    numpy \
+    pandas \
+    matplotlib \
+    scikit-learn \
+    scipy \
+    opencv-python-headless && \
+    pip install \
+    torch \
+    torchvision \
+    pillow \
+    Django \
+    jupyterlab \
+    numpy \
+    pandas \
+    matplotlib \
+    scikit-learn \
+    scipy \
+    opencv-python-headless
+
+COPY model.pt inference.py imagenet_labels.json ./
+
+CMD ["python", "inference.py", "test.jpg"]
