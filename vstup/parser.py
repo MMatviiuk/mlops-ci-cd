@@ -80,9 +80,20 @@ def edebo_stamp(html):
 
 
 def classify(name):
-    """Куди віднести випробування: іспит зі спец., дослідн. пропозиція, чи інше."""
+    """Куди віднести випробування: іспит зі спец., дослідн. пропозиція, чи інше.
+
+    ЄВВ, іноземна та ТЗНК у конкурсний бал входять з фіксованими вагами (або
+    не входять зовсім), але їхні МІНІМАЛЬНІ БАЛИ вирішують допуск і в різних
+    ЗВО різні — тому вони повертаються окремими категоріями, а не «ignore».
+    """
     n = name.lower()
-    if "євв" in n or "тзнк" in n or "іноземна мова" in n or "конкурсний показник" in n:
+    if "євв" in n:
+        return "evv"
+    if "тзнк" in n:
+        return "tznk"
+    if "іноземна мова" in n:
+        return "mova"
+    if "конкурсний показник" in n:
         return "ignore"
     if "презентац" in n or "дослідниц" in n or "пропозиц" in n:
         return "pres"
@@ -124,6 +135,7 @@ def parse_page(html, spec_label=""):
 
         k_isp = k_pres = 0.0
         min_isp = min_pres = ""
+        min_evv = min_mova = min_tznk = ""
         other = []
         for name, typ, bmin, k in COMP_RE.findall(block):
             name = unescape(name)
@@ -133,6 +145,12 @@ def parse_page(html, spec_label=""):
                 k_isp, min_isp = k, bmin
             elif kind == "pres":
                 k_pres, min_pres = k, bmin
+            elif kind == "evv":
+                min_evv = bmin or min_evv
+            elif kind == "tznk":
+                min_tznk = bmin or min_tznk
+            elif kind == "mova":
+                min_mova = bmin or min_mova
             elif kind == "other" and k > 0:
                 other.append(f"{name} (k={k}" + (f", мін.{bmin}" if bmin else "") + ")")
 
@@ -148,6 +166,9 @@ def parse_page(html, spec_label=""):
             "Мін. бал за іспит зі спец.": min_isp or "не встановлено",
             "Дослідн. пропозиція (вага)": k_pres,
             "Мін. бал за пропозицію": min_pres or "—",
+            "Мін. бал ЄВВ": min_evv or "—",
+            "Мін. бал іноземної": min_mova or "—",
+            "Мін. бал ТЗНК": min_tznk or "—",
             "Інші випробування / нюанси": "; ".join(other),
             "Контакти приймальної комісії": f"{BASE}/{reg}/{zvo_id}/entrance.html",
             "Сторінка пропозиції": f"{BASE}/y{year}/{reg}/{zvo_id}/{offer_id}/",
