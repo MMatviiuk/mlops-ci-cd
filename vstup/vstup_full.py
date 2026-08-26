@@ -11,6 +11,14 @@ vstup_full.py — вивантаження конкурсних пропозиц
     python3 vstup_full.py --debug              # діагностика парсера
     python3 vstup_full.py --from-file p1.html  # розібрати збережену сторінку
     python3 vstup_full.py --cookie "cf_clearance=..."   # обхід Cloudflare
+    python3 vstup_full.py --code 2571 --label "Електронна інженерія"
+
+СПЕЦІАЛЬНОСТІ ПОЗА F1-F7. Словник SPECS покриває лише галузь «Інформаційні
+технології». Для спеціальності з іншої галузі (напр. «Електронна інженерія» —
+це галузь «Інженерія, виробництво та будівництво») передайте її код ЄДЕБО через
+--code. Код видно в адресі сторінки переліку на сайті: у
+/spec/7-640-1/0-0-XXXX-0-0-0/ це XXXX. Відкрийте потрібну спеціальність у
+браузері й перепишіть число.
 
 Cron — двічі на добу, коли оновлюється ЄДЕБО (див. run_twice_daily.sh):
     30 6,20 * * *  cd /path/vstup && ./run_twice_daily.sh
@@ -105,8 +113,8 @@ def fetch(path, cookie=None, debug=False):
     return r.text
 
 
-def collect(spec_key, cookie=None, debug=False):
-    code, label = SPECS[spec_key]
+def collect(spec_key, cookie=None, debug=False, specs=None):
+    code, label = (specs or SPECS)[spec_key]
     rows, offset, total = [], 0, None
     while True:
         html = fetch(PATH.format(code=code, offset=offset), cookie, debug)
@@ -156,9 +164,20 @@ def main():
                     help="значення Cookie для обходу Cloudflare (cf_clearance=...)")
     ap.add_argument("--from-file", nargs="*", metavar="HTML",
                     help="розібрати збережені сторінки замість мережі")
+    ap.add_argument("--code", help="код ЄДЕБО спеціальності поза F1-F7 "
+                                   "(число XXXX з /spec/7-640-1/0-0-XXXX-0-0-0/)")
+    ap.add_argument("--label", default="", help="назва для колонки «Спеціальність» "
+                                                "при використанні --code")
     a = ap.parse_args()
 
     allrows, blocked = [], False
+
+    specs = dict(SPECS)
+    wanted = list(a.specs)
+    if a.code:
+        key = a.label or f"код {a.code}"
+        specs[key] = (a.code, a.label or f"спеціальність {a.code}")
+        wanted = [key]      # --code означає «тільки ця спеціальність»
 
     if a.from_file:
         for p in a.from_file:
@@ -168,10 +187,10 @@ def main():
                   f"(сайт каже «Знайдено: {P.found_count(html)}»)")
             allrows += got
     else:
-        for s in a.specs:
-            print(f"[{s}] {SPECS[s][1]}")
+        for s in wanted:
+            print(f"[{s}] {specs[s][1]}")
             try:
-                got = collect(s, a.cookie, a.debug)
+                got = collect(s, a.cookie, a.debug, specs)
             except Blocked as e:
                 print(f"    [!] {e}", file=sys.stderr); blocked = True; continue
             except Exception as e:
