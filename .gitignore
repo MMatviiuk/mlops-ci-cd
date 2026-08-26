@@ -1,0 +1,6 @@
+vstup/__pycache__/
+vstup/snapshots/
+vstup/state.json
+vstup/latest.csv
+vstup/.cookie
+vstup/*.log
