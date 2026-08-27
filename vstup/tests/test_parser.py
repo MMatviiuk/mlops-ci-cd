@@ -22,6 +22,7 @@ EXPECTED = {
     "f3_page2": (17, 67),   # 50 + 17 = 67, збігається з «Знайдено»
     "f2_page1": (27, 27),
     "f7_page1": (21, 21),
+    "g5_page1": (33, 33),   # G5 — спеціальність поза галуззю IT
 }
 
 
@@ -52,6 +53,13 @@ def test_fields_are_populated():
     # хоча б у 90% має бути ненульова вага іспиту зі спеціальності
     with_k = sum(1 for r in rows if r["Іспит зі спец. (вага)"] > 0)
     assert with_k >= 0.9 * len(rows), f"ваги зчитано лише у {with_k} з {len(rows)}"
+
+
+def test_non_it_specialty_label():
+    """Мітку спеціальності треба зчитувати не лише для галузі F."""
+    rows = P.parse_page(load("g5_page1"))
+    assert all(r["Спеціальність"].startswith("G5") for r in rows), \
+        "мітка G5 не зчитана — регулярка знову прив'язана до однієї літери"
 
 
 def test_minimum_scores_extracted():

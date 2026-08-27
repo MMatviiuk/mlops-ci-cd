@@ -39,7 +39,9 @@ ID_LINK = re.compile(r'href="/y(\d{4})/(r\d+)/(\d+)/(\d+)/"[^>]*class="green-but
 FOUND_RE = re.compile(r"Знайдено:\s*(\d+)")
 UPDATED_RE = re.compile(r"Дані отримані з ЄДЕБО[^\d]{0,20}([\d.]+\s*[\d:]*)")
 
-SPEC_RE = re.compile(r"<b>(F\d[^<]{0,80})</b>")
+# мітка виду «F3 Комп'ютерні науки», «G5 Електроніка…» — літера будь-яка,
+# не лише F: галузь IT це F, інженерія — G, і так далі.
+SPEC_RE = re.compile(r"<b>([A-ZА-ЯЄІЇҐ]\d{1,2}\s[^<]{3,90})</b>")
 LO_RE = re.compile(r"ЛО\s*(\d+)")
 # Число заяв лежить в ОКРЕМОМУ <span>, тому старе r"заяв:\s*(\d+)" не працювало.
 ZAYAV_RE = re.compile(r'zayava-count"><span>\s*заяв:\s*</span>\s*<span>\s*(\d+)\s*</span>')
