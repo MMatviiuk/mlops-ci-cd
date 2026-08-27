@@ -70,7 +70,7 @@ def test_minimum_scores_extracted():
 
 
 if __name__ == "__main__":
-    for fn in (test_block_count_matches_site, test_pagination_adds_up,
-               test_fields_are_populated, test_minimum_scores_extracted):
+    tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    for fn in tests:
         fn(); print(f"  ok  {fn.__name__}")
     print("усі тести пройдено")
